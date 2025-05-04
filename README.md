@@ -40,7 +40,7 @@ python eye_tracking.py
 * The system calculates the gaze direction by comparing the position of the iris to the outer eye landmarks.
 * A green dot is drawn on the iris and eye corners, and the gaze direction is displayed on the screen.
 
-#CODE
+# CODE
 
 import cv2
 import mediapipe as mp
