@@ -41,6 +41,8 @@ python eye_tracking.py
 * A green dot is drawn on the iris and eye corners, and the gaze direction is displayed on the screen.
 
 CODE
+
+
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -54,7 +56,7 @@ face_mesh = mp_face_mesh.FaceMesh(
     min_tracking_confidence=0.5
 )
 
-# Indices for the eye landmarks
+# Indices for eye landmarks
 LEFT_EYE = [33, 133]
 RIGHT_EYE = [362, 263]
 LEFT_EYE_LIDS = [159, 145]
@@ -62,18 +64,18 @@ RIGHT_EYE_LIDS = [386, 374]
 LEFT_IRIS = 468
 RIGHT_IRIS = 473
 
-# Helper function to extract eye position
+# Helper function to convert normalized landmarks to pixel coordinates
 def lm(idx, landmarks, w, h):
     pt = landmarks[idx]
     return np.array([int(pt.x * w), int(pt.y * h)])
 
-# Function to calculate the ratio for gaze direction (horizontal or vertical)
+# Function to calculate the ratio for gaze direction
 def get_ratio(p1, p2, center, axis=0):
     eye_range = p2[axis] - p1[axis]
     offset = center[axis] - p1[axis]
     return offset / eye_range if eye_range != 0 else 0.5
 
-# Calculate gaze direction
+# Calculate gaze direction based on ratios
 def get_gaze_direction(h_ratio, v_ratio):
     # Horizontal direction
     if h_ratio < 0.36:
@@ -85,9 +87,9 @@ def get_gaze_direction(h_ratio, v_ratio):
 
     # Vertical direction
     if v_ratio < 0.35:
-        vertical = "closed/Down"
+        vertical = "Down/Closed"
     elif v_ratio > 0.42:
-        vertical = "up"
+        vertical = "Up"
     else:
         vertical = "Center"
 
@@ -118,34 +120,27 @@ while True:
         le_iris = lm(LEFT_IRIS, landmarks, w, h)
         re_iris = lm(RIGHT_IRIS, landmarks, w, h)
 
-        # Calculate gaze ratios (Horizontal and Vertical)
+        # Calculate gaze ratios
         h_ratio = (get_ratio(le[0], le[1], le_iris) + get_ratio(re[0], re[1], re_iris)) / 2
         v_ratio = (get_ratio(le_tb[0], le_tb[1], le_iris, axis=1) +
                    get_ratio(re_tb[0], re_tb[1], re_iris, axis=1)) / 2
 
-        # Get gaze direction
+        # Get and display gaze direction
         gaze_direction = get_gaze_direction(h_ratio, v_ratio)
-
-        # Display gaze direction on screen
         cv2.putText(frame, gaze_direction, (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
-        # Draw green dot on the eyes
-        cv2.circle(frame, tuple(le_iris), 5, (0, 255, 0), -1)  # Left iris
-        cv2.circle(frame, tuple(re_iris), 5, (0, 255, 0), -1)  # Right iris
-        cv2.circle(frame, tuple(le[0]), 5, (0, 255, 0), -1)  # Left eye
-        cv2.circle(frame, tuple(re[0]), 5, (0, 255, 0), -1)  # Right eye
+        # Draw markers on iris and corners
+        for pt in [le_iris, re_iris, le[0], re[0]]:
+            cv2.circle(frame, tuple(pt), 5, (0, 255, 0), -1)
 
-    # Show the frame with gaze direction and green dots
     cv2.imshow("Eye Gaze Tracker", frame)
 
-    # Exit on 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cap.release()
 cv2.destroyAllWindows()
-
 
 
 Code Overview
